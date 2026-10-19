@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "plot-armor/pack/1",
+  "title": "A Plot Armor pack",
+  "description": "One title's terms. Packs are data, never code: src/packs/validate.ts enforces this schema at build time and before any pack is used, and refuses markup in any term.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "aliases",
+    "quality",
+    "triggers",
+    "strong",
+    "weak",
+    "require_context_for",
+    "exclude_phrases"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "title": {
+      "$ref": "#/$defs/term"
+    },
+    "wikidata_id": {
+      "description": "The title's Wikidata item, which joins it to trending titles (DQ-05).",
+      "type": "string",
+      "pattern": "^Q[1-9][0-9]*$"
+    },
+    "quality": {
+      "description": "Where the terms come from, shown as the pack's badge: curated (written and reviewed by hand in this repository), auto (generated from structured data, never plot text) or community (submitted to the public packs repository, checked and reviewed there, and credited to its authors).",
+      "enum": ["curated", "auto", "community"]
+    },
+    "aliases": {
+      "description": "What a person may type in the popup to find this pack.",
+      "$ref": "#/$defs/terms"
+    },
+    "triggers": {
+      "description": "The title, its abbreviations and hashtags; each blurs alone unless it is listed in require_context_for.",
+      "$ref": "#/$defs/terms"
+    },
+    "strong": {
+      "description": "Names that blur alone: characters, places, events. Never plot text.",
+      "$ref": "#/$defs/terms"
+    },
+    "weak": {
+      "description": "Terms that blur only beside a strong term or a trigger in the same container (matched from Phase 2).",
+      "$ref": "#/$defs/terms"
+    },
+    "require_context_for": {
+      "description": "Triggers that are also ordinary words. One matches only as a hashtag, in the exact casing listed in triggers, or beside another term of the pack in the same text.",
+      "$ref": "#/$defs/terms"
+    },
+    "exclude_phrases": {
+      "description": "Phrases that cancel a match inside them, such as \"got it\".",
+      "$ref": "#/$defs/terms"
+    },
+    "first_appearance": {
+      "description": "The episode each strong or weak term first appears in, as S<season>E<episode>, so the revealed list can stop before what a person has not seen; terms without one are listed last.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/term"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^S[1-9][0-9]?E[1-9][0-9]{0,2}$"
+      }
+    },
+    "credit": {
+      "description": "The sources a generated pack was built from, credited as their licences require (CMP-03).",
+      "$ref": "#/$defs/term"
+    }
+  },
+  "$defs": {
+    "term": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^<>]+$"
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/term"
+      },
+      "uniqueItems": true
+    }
+  }
+}

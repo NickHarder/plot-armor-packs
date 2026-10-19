@@ -1,0 +1,45 @@
+# Runs Plot Armor's community check (scripts/check_community_packs.ts in the private code
+# repository) on every pull request and on every push to main: the same rules the daily build
+# applies before signing a pack.
+#
+# The code repository is private, so it is read with PLOT_ARMOR_READ_TOKEN, a fine-grained token
+# that can only read its contents. GitHub withholds secrets from pull requests opened from forks,
+# which is how outside contributors submit, so pull requests run on pull_request_target, which has
+# them. That event runs this workflow as it is on main, never the pull request's version of it, and
+# the pull request's files are checked out only as data: nothing from the pull request is run.
+name: Check packs
+
+on:
+  pull_request_target:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # The packs to check: the pull request's head, or main on a push.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          path: packs-repository
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: NickHarder/plot-armor
+          token: ${{ secrets.PLOT_ARMOR_READ_TOKEN }}
+          path: plot-armor
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+        working-directory: plot-armor
+      - run: node scripts/check_community_packs.ts --dir ../packs-repository/packs
+        working-directory: plot-armor
